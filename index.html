@@ -13,18 +13,19 @@ body{margin:0;font-family:Cairo,sans-serif;background:var(--c);color:var(--t);fo
 h1,h2,h3{font-family:Amiri,serif;margin:0;color:var(--d)}
 .card{background:#fff;border:2px solid var(--y);border-radius:18px;padding:18px;margin:14px 0}
 input,select,textarea{width:100%;padding:12px;border:2px solid var(--y);border-radius:12px;background:var(--c);font:inherit;margin:6px 0 10px}
-button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 16px;background:var(--g);color:#fff;cursor:pointer}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 16px;background:var(--g);color:#fff;cursor:pointer;margin:2px 0}
 button.gold{background:var(--y);color:var(--d)}
 button.sm{padding:6px 10px;font-size:14px}
 button.red{background:#9b2c2c}
 .wrap{max-width:960px;margin:auto;padding:12px}
 .row{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px dashed rgba(15,76,58,.25);align-items:center;flex-wrap:wrap}
+.row select{width:auto;margin:0}
 .lv{display:flex;gap:8px}
 .lv div{flex:1;text-align:center;padding:10px;border-radius:12px;background:rgba(255,255,255,.15);color:var(--c);font-weight:700}
 .lv .on{background:var(--y);color:var(--d)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9}
-.modal .card{width:100%;max-width:420px;max-height:90vh;overflow:auto}
+.modal .card{width:100%;max-width:460px;max-height:90vh;overflow:auto}
 .poster{width:100%;max-width:560px;display:block;margin:16px auto;border-radius:14px}
 .err{color:#9b2c2c;font-weight:700;min-height:22px}
 </style>
@@ -36,15 +37,28 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,addDoc,updateDoc,query,orderBy,serverTimestamp,runTransaction} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-const LOGO="IMG-20261121-WA0008.jpg",POSTER="IMG-20261121-WA0009.jpg";
+const LOGO="IMG-20261121-WA0008.jpg",POSTER="IMG-20261121-WA0009.jpg",TP="01013020109";
 const app=initializeApp({apiKey:"AIzaSyAzn3RcN4MdkuI75zsEbwejdTRFQaJ-26I",authDomain:"imam-academy-f015a.firebaseapp.com",projectId:"imam-academy-f015a",storageBucket:"imam-academy-f015a.firebasestorage.app",messagingSenderId:"215712325463",appId:"1:215712325463:web:73b173c350527c3aeca812"});
 const db=getFirestore(app),auth=getAuth(app);
 const $=s=>document.querySelector(s),A=$("#app");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const norm=s=>String(s).replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/[\u064B-\u0652]/g,"").replace(/\s+/g," ").trim().toLowerCase();
+const nc=s=>String(s).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).toUpperCase().replace(/[^A-Z0-9]/g,"");
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
-const gen=()=>{const c="ABCDEFGHJKMNPQRSTUVWXYZ23456789";return [...crypto.getRandomValues(new Uint8Array(8))].map(x=>c[x%c.length]).join("")};
-const fc=c=>c.slice(0,4)+"-"+c.slice(4);
+const gen=async()=>{for(;;){const c=String(crypto.getRandomValues(new Uint32Array(1))[0]%1e8).padStart(8,"0");if(!(await getDoc(doc(db,"students",c))).exists())return c}};
+const fc=c=>c.length==8?c.slice(0,4)+"-"+c.slice(4):c;
+const link=c=>location.href.split("#")[0].split("?")[0]+"#"+c;
+const wn=p=>{p=String(p||"").replace(/\D/g,"");if(p.startsWith("00"))p=p.slice(2);else if(p.startsWith("0"))p="20"+p.slice(1);return p};
+const wa=(p,t)=>"https://wa.me/"+wn(p)+(t?"?text="+encodeURIComponent(t):"");
+const lk=(h,t,bg)=>`<a href="${h}" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;font-weight:700;border-radius:12px;padding:12px 18px;margin:4px;background:${bg};color:#fff">${t}</a>`;
+const ctc=p=>lk(wa(p),"💬 واتساب","#25D366")+lk("tel:"+String(p).replace(/[^\d+]/g,""),"📞 اتصال","#0F4C3A");
+const contact=()=>`<div class=card style="text-align:center"><h3>للتواصل مع الأستاذ علي</h3><p dir=ltr style="font-size:22px;font-weight:700;margin:8px 0">${TP}</p>${ctc(TP)}</div>`;
+const wsend=(s,t)=>{if(!s.phone)return alert("سجّل رقم واتساب ولي الأمر من زرار تعديل بيانات الطالب");window.open(wa(s.phone,t),"_blank")};
+const loginMsg=s=>`السلام عليكم ورحمة الله\nأكاديمية الإمام\nالطالب: ${s.name}\nكود المتابعة: ${fc(s.code)}\nرابط مباشر لمتابعة مستوى ابنكم:\n${link(s.code)}`;
+const N={
+exams:(s,v)=>`السلام عليكم ورحمة الله\nأكاديمية الإمام\nتم تسجيل درجة الطالب ${s.name}\n${v.type}: ${v.title}\nالدرجة: ${v.score} من ${v.max}\nللتفاصيل: ${link(s.code)}`,
+recitations:(s,v)=>`السلام عليكم ورحمة الله\nأكاديمية الإمام\nتم تسجيل تسميع للطالب ${s.name}\nالجزء: ${v.part}\nالتقدير: ${v.grade}\nللتفاصيل: ${link(s.code)}`};
+const absMsg=(s,d)=>`السلام عليكم ورحمة الله\nأكاديمية الإمام\nنفيدكم بغياب الطالب ${s.name} بتاريخ ${d}.\nنرجو الاطمئنان على الطالب وإبلاغنا بسبب الغياب.\nرابط المتابعة: ${link(s.code)}`;
 const L=["مبتدئ","طالب علم","متقن"];
 let cur,ST=[],unread=0,page="home";
 
@@ -53,7 +67,7 @@ attendance:{t:"الحضور",f:[["date","التاريخ","date"],["status","ال
 recitations:{t:"التسميعات",f:[["date","التاريخ","date"],["part","الجزء المسمّع","text"],["grade","التقدير",["ممتاز","جيد جدا","جيد","مقبول","ضعيف"]]]},
 exams:{t:"الامتحانات",f:[["date","التاريخ","date"],["title","اسم الامتحان","text"],["type","النوع",["شهري","نصف العام","كويز","نهاية العام"]],["score","الدرجة","number"],["max","من","number"]]},
 fees:{t:"المصاريف",f:[["month","الشهر","month"],["amount","المبلغ المطلوب","number"],["paid","المدفوع","number"]]},
-stu:{t:"بيانات الطالب",f:[["name","اسم الطالب","text"],["group","المجموعة",["1","2","3","4","5","6"]],["stage","المرحلة",["إعدادي","ثانوي"]]]}
+stu:{t:"بيانات الطالب",f:[["name","اسم الطالب","text"],["group","المجموعة",["1","2","3","4","5","6"]],["stage","المرحلة",["إعدادي","ثانوي"]],["phone","رقم واتساب ولي الأمر","tel"]]}
 };
 S.new={t:"إضافة طالب",f:S.stu.f};
 
@@ -63,19 +77,32 @@ k=="recitations"?`${r.date} · ${esc(r.part)} · <b>${esc(r.grade)}</b>`:`${r.da
 
 const put=(h,p)=>{page=p;A.innerHTML=h;scrollTo(0,0)};
 
-function home(m=""){put(`<div class="pat" style="text-align:center;padding:26px 16px;color:var(--c)"><img src="${LOGO}" onerror="this.style.display='none'" style="width:130px;height:130px;border-radius:50%;border:3px solid var(--y);object-fit:cover"><h1 style="color:var(--c);font-size:42px">أكاديمية الإمام</h1><div style="color:var(--y)">العلوم الشرعية للمرحلتين الإعدادية والثانوية الأزهرية</div></div><div class=wrap><div class=card><h2>أهلاً بولي الأمر</h2><p>تابع مستوى ابنك بكل سهولة</p><label>اسم الطالب</label><input id=nm><label>كود الطالب</label><input id=cd dir=ltr><div class=err>${m}</div><button data-a=login style="width:100%">دخول</button></div><img class=poster src="${POSTER}" onerror="this.style.display='none'"><p style="text-align:center"><a href=# data-a=staff>دخول المدرس</a></p></div>`,"home")}
+function rep(s,ym){
+const inM=a=>(a||[]).filter(x=>(x.date||x.month||"").startsWith(ym));
+const at=inM(s.attendance),c=n=>at.filter(x=>x.status==n).length;
+const rc=inM(s.recitations),ex=inM(s.exams),fe=inM(s.fees);
+return `📋 تقرير شهر ${ym}\nأكاديمية الإمام\nالطالب: ${s.name}\nالمجموعة ${s.group} · ${s.stage}\nالمستوى: ${L[s.level||0]}\n\n✅ الحضور: ${c("حاضر")} حاضر · ${c("غائب")} غائب · ${c("معتذر")} معتذر\n\n📖 التسميعات:\n${rc.map(r=>`- ${r.part}: ${r.grade}`).join("\n")||"- لا يوجد"}\n\n📝 الامتحانات:\n${ex.map(r=>`- ${r.title}: ${r.score}/${r.max}`).join("\n")||"- لا يوجد"}\n\n💰 المصاريف: ${fe.map(r=>+r.paid>=+r.amount?"مدفوعة":`المدفوع ${r.paid} من ${r.amount}`).join("، ")||"لم تُسجل"}${s.notes?`\n\n📌 ملاحظات الأستاذ: ${s.notes}`:""}\n\nرابط المتابعة: ${link(s.code)}`}
+
+function home(m=""){put(`<div class="pat" style="text-align:center;padding:26px 16px;color:var(--c)"><img src="${LOGO}" onerror="this.style.display='none'" style="width:130px;height:130px;border-radius:50%;border:3px solid var(--y);object-fit:cover"><h1 style="color:var(--c);font-size:42px">أكاديمية الإمام</h1><div style="color:var(--y)">العلوم الشرعية للمرحلتين الإعدادية والثانوية الأزهرية</div></div><div class=wrap><div class=card><h2>أهلاً بولي الأمر</h2><p>تابع مستوى ابنك بكل سهولة</p><label>اسم الطالب</label><input id=nm><label>كود الطالب</label><input id=cd dir=ltr inputmode=numeric><div class=err>${m}</div><button data-a=login style="width:100%">دخول</button></div>${contact()}<img class=poster src="${POSTER}" onerror="this.style.display='none'"><p style="text-align:center"><a href=# data-a=staff>دخول المدرس</a></p></div>`,"home")}
 
 function staffLogin(){put(`<div class=wrap><div class=card><h2>دخول المدرس والأسيستنت</h2><label>الإيميل</label><input id=em type=email dir=ltr><label>كلمة السر</label><input id=pw type=password dir=ltr><div class=err id=er></div><button data-a=slogin style="width:100%">دخول</button> <button class="sm gold" data-a=home>رجوع</button></div></div>`,"slogin")}
 
-const bar=()=>`<div class=pat style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:var(--y);font-family:Amiri;font-size:22px">أكاديمية الإمام</b><span><button class="sm gold" data-a=back>الطلاب</button> <button class="sm gold" data-a=inbox>الرسائل${unread?` (${unread})`:""}</button> <button class=sm data-a=out>خروج</button></span></div>`;
+const bar=()=>`<div class=pat style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:var(--y);font-family:Amiri;font-size:22px">أكاديمية الإمام</b><span><button class="sm gold" data-a=back>الطلاب</button> <button class="sm gold" data-a=bulk>الحضور</button> <button class="sm gold" data-a=inbox>الرسائل${unread?` (${unread})`:""}</button> <button class=sm data-a=out>خروج</button></span></div>`;
+
+async function load(){const[a,b]=await Promise.all([getDocs(collection(db,"students")),getDocs(collection(db,"inbox"))]);ST=a.docs.map(d=>d.data()).sort((x,y)=>x.name.localeCompare(y.name,"ar"));unread=b.docs.filter(d=>!d.data().read).length}
 
 async function list(){
-try{const[a,b]=await Promise.all([getDocs(collection(db,"students")),getDocs(collection(db,"inbox"))]);ST=a.docs.map(d=>d.data()).sort((x,y)=>x.name.localeCompare(y.name,"ar"));unread=b.docs.filter(d=>!d.data().read).length}catch(e){alert("لا تملك صلاحية الدخول");return signOut(auth)}
+try{await load()}catch(e){alert("لا تملك صلاحية الدخول");return signOut(auth)}
 put(bar()+`<div class=wrap><div class=row style="border:0"><h2>الطلاب (<span id=n></span>)</h2><button class=gold data-a=new>+ إضافة طالب</button></div><div class=grid><input id=q placeholder="بحث بالاسم أو الكود"><select id=g><option value="">كل المجموعات</option>${[1,2,3,4,5,6].map(i=>`<option>${i}</option>`).join("")}</select></div><div class=card id=rows></div></div>`,"list");fill()}
 
-function fill(){const q=norm($("#q").value),g=$("#g").value,r=ST.filter(s=>(!g||s.group==g)&&(norm(s.name).includes(q)||s.code.toLowerCase().includes(q.replace("-",""))));
+function fill(){const q=norm($("#q").value.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d))),g=$("#g").value,r=ST.filter(s=>(!g||s.group==g)&&(norm(s.name).includes(q)||s.code.toLowerCase().includes(q.replace("-",""))));
 $("#n").textContent=r.length;
 $("#rows").innerHTML=r.map(s=>`<div class=row><span><b>${esc(s.name)}</b><br><small>مجموعة ${esc(s.group)} · ${esc(s.stage)} · <span dir=ltr>${fc(s.code)}</span></small></span><button class=sm data-a=open data-c=${s.code}>فتح</button></div>`).join("")||"لا يوجد طلاب"}
+
+async function bulk(g="",d=today()){
+try{await load()}catch(e){return signOut(auth)}
+const r=ST.filter(s=>s.group==g);
+put(bar()+`<div class=wrap><h2>حضور المجموعة</h2><div class=card><div class=grid><select id=bg><option value="">اختار المجموعة</option>${[1,2,3,4,5,6].map(i=>`<option${g==i?" selected":""}>${i}</option>`).join("")}</select><input id=bd type=date value="${d}"></div>${g?(r.map(s=>{const x=(s.attendance||[]).find(a=>a.date==d);return `<div class=row><b>${esc(s.name)}</b><select class=bs data-c=${s.code}>${["حاضر","غائب","معتذر"].map(o=>`<option${x&&x.status==o?" selected":""}>${o}</option>`).join("")}</select></div>`}).join("")||"لا يوجد طلاب في المجموعة")+(r.length?`<br><button data-a=bsave>حفظ الحضور</button>`:""):"اختار المجموعة والتاريخ"}</div></div>`,"bulk")}
 
 async function inbox(){
 const d=await getDocs(query(collection(db,"inbox"),orderBy("createdAt","desc")));unread=0;
@@ -84,19 +111,35 @@ d.docs.filter(x=>!x.data().read).forEach(x=>updateDoc(x.ref,{read:true}))}
 
 async function openStu(c){cur=(await getDoc(doc(db,"students",c))).data();put(bar()+`<div class=wrap><button class=sm data-a=back>← رجوع</button>${sv(cur,1)}</div>`,"stu")}
 
-function pv(){put(`<div class=wrap><div class=row style="border:0"><b style="font-family:Amiri;font-size:24px">أكاديمية الإمام</b><button class=sm data-a=home>خروج</button></div>${sv(cur,0)}<div class=card><h3>اكتب رسالة للأستاذ علي</h3><textarea id=pm rows=3 placeholder="اكتب رسالتك أو سؤالك..."></textarea><button data-a=pmsg style="width:100%">إرسال</button></div></div>`,"parent")}
+function pv(){put(`<div class=wrap><div class=row style="border:0"><b style="font-family:Amiri;font-size:24px">أكاديمية الإمام</b><button class=sm data-a=home>خروج</button></div>${sv(cur,0)}<div class=card><h3>اكتب رسالة للأستاذ علي</h3><textarea id=pm rows=3 placeholder="اكتب رسالتك أو سؤالك..."></textarea><button data-a=pmsg style="width:100%">إرسال</button></div>${contact()}</div>`,"parent")}
+
+async function direct(c){try{const d=await getDoc(doc(db,"students",c));if(d.exists()){cur=d.data();return pv()}}catch(e){}home("الرابط غير صحيح، اكتب الاسم والكود")}
 
 function sv(s,st){
 const att=s.attendance||[],ok=att.filter(x=>x.status=="حاضر").length;
 const sec=k=>{const rows=[...(s[k]||[])].sort((a,b)=>(b.date||b.month||"").localeCompare(a.date||a.month||""));
 return `<div class=card><div class=row style="border:0"><h3>${S[k].t}${k=="attendance"&&att.length?` · ${Math.round(ok/att.length*100)}٪`:""}</h3>${st?`<button class="sm gold" data-a=add data-k=${k}>+ إضافة</button>`:""}</div>`+
 (rows.map(r=>`<div class=row><span>${show(k,r)}</span>${st?`<span><button class=sm data-a=edit data-k=${k} data-i=${r.id}>تعديل</button> <button class="sm red" data-a=del data-k=${k} data-i=${r.id}>حذف</button></span>`:""}</div>`).join("")||"<div style='opacity:.6'>لا يوجد بعد</div>")+"</div>"};
-const msgs=(s.messages||[]).slice(st?0:-3).reverse().map(m=>`<div class=card><small style="color:var(--g)">رسالة من أ/ علي · ${m.date}</small><p style="font-size:18px;margin:6px 0">${esc(m.text)}</p>${st?`<button class="sm red" data-a=del data-k=messages data-i=${m.id}>حذف</button>`:""}</div>`).join("");
-const info=st?`<div class=card><h3>المستوى والملاحظات</h3><select id=lvl>${L.map((n,i)=>`<option value=${i}${i==(s.level||0)?" selected":""}>${n}</option>`).join("")}</select><textarea id=nts rows=3 placeholder="ملاحظات المدرس">${esc(s.notes)}</textarea><button data-a=saveinfo>حفظ</button></div><div class=card><h3>رسالة لولي الأمر</h3><textarea id=msg rows=3></textarea><button data-a=sendmsg>إرسال</button></div>`:(s.notes?`<div class=card><h3>ملاحظات المدرس</h3><p>${esc(s.notes)}</p></div>`:"");
-const foot=st?`<div class=card><div>كود الطالب: <b dir=ltr>${fc(s.code)}</b></div><br><button data-a=copy>نسخ بيانات الدخول</button> <button class=gold data-a=edstu>تعديل بيانات الطالب</button> <button class=red data-a=delstu>حذف الطالب</button></div>`:"";
+const msgs=(s.messages||[]).slice(st?0:-3).reverse().map(m=>`<div class=card><small style="color:var(--g)">رسالة من أ/ علي · ${m.date}</small><p style="font-size:17px;margin:6px 0;white-space:pre-line">${esc(m.text)}</p>${st?`<button class="sm red" data-a=del data-k=messages data-i=${m.id}>حذف</button>`:""}</div>`).join("");
+const info=st?`<div class=card><h3>المستوى والملاحظات</h3><select id=lvl>${L.map((n,i)=>`<option value=${i}${i==(s.level||0)?" selected":""}>${n}</option>`).join("")}</select><textarea id=nts rows=3 placeholder="ملاحظات المدرس">${esc(s.notes)}</textarea><button data-a=saveinfo>حفظ</button></div><div class=card><h3>رسالة لولي الأمر</h3><textarea id=msg rows=3></textarea><button data-a=sendmsg>حفظ في المنصة</button> <button class=gold data-a=sendmsg data-w=1>حفظ + واتساب</button> <button data-a=report>تقرير شهري</button></div>`:(s.notes?`<div class=card><h3>ملاحظات المدرس</h3><p>${esc(s.notes)}</p></div>`:"");
+const foot=st?`<div class=card><div>كود الطالب: <b dir=ltr>${fc(s.code)}</b></div><div style="margin-top:6px">واتساب ولي الأمر: <b dir=ltr>${esc(s.phone||"غير مسجل")}</b></div>${s.phone?ctc(s.phone):""}<br><button data-a=wacode>إرسال الكود واتساب</button> <button class=gold data-a=copycode>نسخ الكود</button> <button class=gold data-a=copy>نسخ الرسالة</button> <button class=gold data-a=edstu>تعديل بيانات الطالب</button> <button class=red data-a=delstu>حذف الطالب</button></div>`:"";
 return `<div class=pat style="border-radius:22px;padding:24px;color:var(--c);margin:14px 0"><div style="color:var(--y)">أكاديمية الإمام</div><h1 style="color:var(--c);font-size:38px">${esc(s.name)}</h1><div>المجموعة ${esc(s.group)} · ${esc(s.stage)}</div><div class=lv style="margin-top:14px">${L.map((n,i)=>`<div class="${i==(s.level||0)?"on":""}">${n}</div>`).join("")}</div></div>`+msgs+info+`<div class=grid>${["attendance","recitations","exams","fees"].map(sec).join("")}</div>`+foot}
 
 async function mut(code,fn){const ref=doc(db,"students",code);await runTransaction(db,async t=>{const s=(await t.get(ref)).data();fn(s);t.set(ref,s)})}
+
+function notify(s,t){
+const m=document.createElement("div");m.className="modal";
+m.innerHTML=`<div class=card><h3>إبلاغ ولي الأمر</h3>${s.phone?"":"<p class=err>رقم واتساب ولي الأمر غير مسجل. سجّله من زرار تعديل بيانات الطالب.</p>"}<textarea id=nt rows=8>${esc(t)}</textarea><button id=w>إرسال واتساب</button> <button class=red id=cn>لاحقاً</button></div>`;
+document.body.append(m);
+m.querySelector("#w").onclick=()=>{wsend(s,m.querySelector("#nt").value);m.remove()};
+m.querySelector("#cn").onclick=()=>m.remove()}
+
+function absForm(l,d){
+const m=document.createElement("div");m.className="modal";
+m.innerHTML=`<div class=card><h3>إبلاغ أولياء الأمور بالغياب</h3>${l.map(s=>`<div class=row><span>${esc(s.name)}</span>${s.phone?`<button class="sm gold" data-w=${s.code}>واتساب</button>`:"<small>لا يوجد رقم</small>"}</div>`).join("")}<br><button class=red id=cn>إغلاق</button></div>`;
+document.body.append(m);
+m.onclick=e=>{const b=e.target.closest("[data-w]");if(b){const s=l.find(x=>x.code==b.dataset.w);if(s)wsend(s,absMsg(s,d))}};
+m.querySelector("#cn").onclick=()=>m.remove()}
 
 function form(k,r){
 const m=document.createElement("div");m.className="modal";
@@ -107,30 +150,47 @@ m.querySelector("#sv").onclick=async()=>{
 const v={};m.querySelectorAll("[name]").forEach(i=>v[i.name]=i.type=="number"?+i.value:i.value);
 if((k=="new"||k=="stu")&&!v.name.trim())return alert("اكتب الاسم");
 try{
-if(k=="new"){const code=gen();await setDoc(doc(db,"students",code),{...v,code,level:0,notes:"",attendance:[],recitations:[],exams:[],fees:[],messages:[]});m.remove();return openStu(code)}
+if(k=="new"){const code=await gen();await setDoc(doc(db,"students",code),{...v,code,level:0,notes:"",attendance:[],recitations:[],exams:[],fees:[],messages:[]});m.remove();return openStu(code)}
 await mut(cur.code,s=>{if(k=="stu")Object.assign(s,v);else{const a=s[k]=s[k]||[];if(r)a[a.findIndex(x=>x.id==r.id)]={...r,...v};else a.push({id:Date.now().toString(36),...v})}});
-m.remove();openStu(cur.code)
+m.remove();await openStu(cur.code);if(!r&&N[k])notify(cur,N[k](cur,v))
 }catch(e){alert("حدث خطأ، حاول مرة أخرى")}}}
 
+function repForm(){
+const m=document.createElement("div");m.className="modal";
+m.innerHTML=`<div class=card><h3>تقرير شهري</h3><label>الشهر</label><input id=rm type=month value="${today().slice(0,7)}"><textarea id=rt rows=12></textarea><button id=w>إرسال واتساب</button> <button class=gold id=cp>نسخ</button> <button id=pb>نشر في صفحة ولي الأمر</button> <button class=red id=cn>إغلاق</button></div>`;
+document.body.append(m);
+const rt=m.querySelector("#rt"),rm=m.querySelector("#rm"),upd=()=>{rt.value=rep(cur,rm.value)};upd();rm.onchange=upd;
+m.querySelector("#w").onclick=()=>wsend(cur,rt.value);
+m.querySelector("#cp").onclick=()=>navigator.clipboard.writeText(rt.value).then(()=>alert("تم نسخ التقرير"));
+m.querySelector("#pb").onclick=async()=>{await mut(cur.code,s=>{(s.messages=s.messages||[]).push({id:Date.now().toString(36),date:today(),text:rt.value})});m.remove();openStu(cur.code)};
+m.querySelector("#cn").onclick=()=>m.remove()}
+
 const acts={
-home:()=>home(),staff:()=>staffLogin(),back:()=>list(),inbox:()=>inbox(),out:()=>signOut(auth),
-login:async()=>{const n=$("#nm").value,c=$("#cd").value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+home:()=>{history.replaceState(null,"",location.pathname+location.search);home()},staff:()=>staffLogin(),back:()=>list(),inbox:()=>inbox(),out:()=>signOut(auth),bulk:()=>bulk(),
+login:async()=>{const n=$("#nm").value,c=nc($("#cd").value);
 try{const d=await getDoc(doc(db,"students",c));if(d.exists()&&norm(n).length>=3&&norm(d.data().name).includes(norm(n))){cur=d.data();pv()}else home("الاسم أو الكود غير صحيح")}catch(e){home("الاسم أو الكود غير صحيح")}},
 slogin:async()=>{try{await signInWithEmailAndPassword(auth,$("#em").value.trim(),$("#pw").value)}catch(e){$("#er").textContent="الإيميل أو كلمة السر غير صحيحة"}},
-open:d=>openStu(d.c),new:()=>form("new"),edstu:()=>form("stu",cur),
+open:d=>openStu(d.c),new:()=>form("new"),edstu:()=>form("stu",cur),report:()=>repForm(),
 add:d=>form(d.k),edit:d=>form(d.k,cur[d.k].find(x=>x.id==d.i)),
 del:async d=>{if(confirm("متأكد من الحذف؟")){await mut(cur.code,s=>{s[d.k]=s[d.k].filter(x=>x.id!=d.i)});openStu(cur.code)}},
 saveinfo:async()=>{await mut(cur.code,s=>{s.level=+$("#lvl").value;s.notes=$("#nts").value});alert("تم الحفظ");openStu(cur.code)},
-sendmsg:async()=>{const t=$("#msg").value.trim();if(!t)return;await mut(cur.code,s=>{(s.messages=s.messages||[]).push({id:Date.now().toString(36),date:today(),text:t})});openStu(cur.code)},
-copy:()=>navigator.clipboard.writeText(`أكاديمية الإمام\nالطالب: ${cur.name}\nالكود: ${fc(cur.code)}\nرابط المتابعة: ${location.href.split("#")[0]}`).then(()=>alert("تم النسخ، ابعتها لولي الأمر")),
+sendmsg:async d=>{const t=$("#msg").value.trim();if(!t)return;if(d.w)wsend(cur,`أكاديمية الإمام\nرسالة من أ/ علي بخصوص ${cur.name}:\n${t}`);await mut(cur.code,s=>{(s.messages=s.messages||[]).push({id:Date.now().toString(36),date:today(),text:t})});openStu(cur.code)},
+bsave:async()=>{const d=$("#bd").value,ab=[...document.querySelectorAll(".bs")].filter(e=>e.value=="غائب").map(e=>e.dataset.c);
+try{await Promise.all([...document.querySelectorAll(".bs")].map(e=>mut(e.dataset.c,s=>{s.attendance=(s.attendance||[]).filter(a=>a.date!=d);s.attendance.push({id:Date.now().toString(36)+e.dataset.c.slice(-3),date:d,status:e.value})})));
+alert("تم حفظ الحضور");await bulk($("#bg").value,d);const l=ST.filter(s=>ab.includes(s.code));if(l.length)absForm(l,d)}catch(e){alert("حدث خطأ، حاول مرة أخرى")}},
+copycode:()=>navigator.clipboard.writeText(cur.code).then(()=>alert("تم نسخ الكود")),
+wacode:()=>wsend(cur,loginMsg(cur)),
+copy:()=>navigator.clipboard.writeText(loginMsg(cur)).then(()=>alert("تم النسخ، ابعتها لولي الأمر")),
 delstu:async()=>{if(confirm("حذف الطالب وكل بياناته نهائياً؟")){await deleteDoc(doc(db,"students",cur.code));list()}},
 delmsg:async d=>{await deleteDoc(doc(db,"inbox",d.m));inbox()},
 pmsg:async()=>{const t=$("#pm").value.trim();if(!t)return;try{await addDoc(collection(db,"inbox"),{code:cur.code,name:cur.name,text:t.slice(0,1000),createdAt:serverTimestamp(),read:false});$("#pm").value="";alert("تم إرسال رسالتك للأستاذ علي")}catch(e){alert("تعذر الإرسال، حاول مرة أخرى")}}
 };
 A.onclick=e=>{const b=e.target.closest("[data-a]");if(!b)return;e.preventDefault();const f=acts[b.dataset.a];f&&f(b.dataset)};
 A.oninput=()=>{if(page=="list")fill()};
+A.onchange=e=>{if(page=="bulk"&&(e.target.id=="bg"||e.target.id=="bd"))bulk($("#bg").value,$("#bd").value||today())};
 onAuthStateChanged(auth,u=>{if(u)list();else if(page!="home"&&page!="slogin"&&page!="parent")home()});
 home();
+if(location.hash.length>1)direct(nc(decodeURIComponent(location.hash.slice(1))));
 </script>
 </body>
 </html>
